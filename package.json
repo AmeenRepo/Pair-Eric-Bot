@@ -1,5 +1,5 @@
 {
-  "name": "whatsapp-pairing-code-generator",
+  "name": "AmeenInt-Pair",
   "version": "1.0.0",
   "description": "A web app to generate WhatsApp pairing codes",
   "main": "index.js",
