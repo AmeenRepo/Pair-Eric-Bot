@@ -12,7 +12,7 @@ const sessionFile = './auth_info.json';
 const { state, saveState } = useSingleFileAuthState(sessionFile);
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/index.html'));
+    res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
 app.post('/generate-code', async (req, res) => {
