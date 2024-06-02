@@ -1,44 +1,65 @@
+// index.js
+
 const express = require('express');
 const bodyParser = require('body-parser');
-const { makeWASocket, useSingleFileAuthState, generateWAMessageFromContent, proto } = require('@whiskeysockets/baileys');
+const { makeWASocket } = require("@whiskeysockets/baileys");
 const fs = require('fs');
-const path = require('path');
 
 const app = express();
+const port = process.env.PORT || 3000;
+
+const XeonBotInc = makeWASocket({
+    auth: {
+        creds: {}, // Provide credentials if available
+    },
+});
+
+// Serve static files from the 'public' directory
+app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: true }));
 
-let phoneNumber;
-const sessionFile = './auth_info.json';
-const { state, saveState } = useSingleFileAuthState(sessionFile);
+// Handle pairing code generation
+app.post('/generate-code', async (req, res) => {
+    const phoneNumber = req.body.phoneNumber;
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/index.html'));
+    if (!phoneNumber) {
+        return res.status(400).send('Phone number is required');
+    }
+
+    try {
+        // Request a pairing code
+        const code = await XeonBotInc.requestPairingCode(phoneNumber);
+        res.send(code);
+    } catch (error) {
+        console.error("Error requesting pairing code:", error);
+        res.status(500).send('Error generating pairing code');
+    }
 });
 
-app.post('/generate-code', async (req, res) => {
-    phoneNumber = req.body.phoneNumber;
+// Handle receiving creds.json file
+app.post('/receive-creds', async (req, res) => {
+    const { creds } = req.body;
 
-    const sock = makeWASocket({
-        auth: state
-    });
+    // Save creds.json file
+    fs.writeFile('creds.json', creds, async (err) => {
+        if (err) {
+            console.error("Error saving creds.json:", err);
+            return res.status(500).send('Error saving creds.json');
+        }
 
-    sock.ev.on('connection.update', (update) => {
-        const { connection, qr } = update;
-        if (qr) {
-            const pairingCode = Math.random().toString().slice(-8);
-            console.log(`Pairing code: ${pairingCode}`);
-            res.send(`Pairing code generated: ${pairingCode}`);
-        } else if (connection === 'open') {
-            console.log('Connected to WhatsApp');
-            const creds = fs.readFileSync(sessionFile, 'utf8');
-            sock.sendMessage(`${phoneNumber}@s.whatsapp.net`, { text: `Here is your creds.json file:\n\`\`\`${creds}\`\`\`` });
-            console.log('creds.json sent to your WhatsApp');
+        // Send creds.json file to WhatsApp
+        try {
+            await XeonBotInc.sendMessage('YOUR_PHONE_NUMBER', { document: creds, mimetype: 'application/json', fileName: 'creds.json' });
+            res.send('creds.json sent to WhatsApp successfully');
+        } catch (error) {
+            console.error("Error sending creds.json to WhatsApp:", error);
+            res.status(500).send('Error sending creds.json to WhatsApp');
         }
     });
-
-    sock.ev.on('creds.update', saveState);
 });
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log('Server is running on port 3000');
+// Start the server
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });
+        
