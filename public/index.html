@@ -1,0 +1,40 @@
+<!-- public/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bot Pairing</title>
+</head>
+<body>
+    <h1>AMEENINT</h1>
+    <form id="pairingForm">
+        <label for="phoneNumber">Enter your phone number:</label>
+        <input type="text" id="phoneNumber" name="phoneNumber" required>
+        <button type="submit">Generate Pairing Code</button>
+    </form>
+
+    <div id="pairingCode"></div>
+
+    <script>
+        document.getElementById('pairingForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const phoneNumber = document.getElementById('phoneNumber').value;
+
+            const response = await fetch('/generate-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `phoneNumber=${phoneNumber}`
+            });
+
+            const code = await response.text();
+            document.getElementById('pairingCode').innerText = `Pairing code: ${code}`;
+        });
+    </script>
+</body>
+  </html>
+  
